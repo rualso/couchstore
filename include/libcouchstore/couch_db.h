@@ -259,6 +259,15 @@ extern "C" {
      */
     LIBCOUCHSTORE_API
     couchstore_error_t couchstore_commit(Db *db);
+	
+	/**
+     * Commit all pending changes without flush buffers to persistent storage.
+     *
+     * @param db database to perform the commit on
+     * @return COUCHSTORE_SUCCESS on success
+     */
+    LIBCOUCHSTORE_API
+    couchstore_error_t couchstore_commit_nosync(Db *db);
 
 
     /*////////////////////  RETRIEVING DOCUMENTS: */
