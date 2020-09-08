@@ -244,6 +244,30 @@ couchstore_error_t precommit(Db *db)
     return errcode;
 }
 
+couchstore_error_t precommit_nosync(Db *db)
+{
+    cs_off_t curpos = db->file.pos;
+
+    db->file.pos = align_to_next_block(db->file.pos);
+    sized_buf zerobyte = { const_cast<char*>("\0"), 1};
+
+    size_t seqrootsize, idrootsize, localrootsize;
+    db->file.pos += calculate_header_size(db, seqrootsize,
+                                          idrootsize, localrootsize);
+
+    //Extend file size to where end of header will land before we do first sync
+    couchstore_error_t errcode = static_cast<couchstore_error_t>(
+        db_write_buf(&db->file, &zerobyte, NULL, NULL));
+
+    //if (errcode == COUCHSTORE_SUCCESS) {
+    //    errcode = db->file.ops->sync(&db->file.lastError, db->file.handle);
+    //}
+    // Move cursor back to where it was
+    db->file.pos = curpos;
+    return errcode;
+}
+
+
 LIBCOUCHSTORE_API
 couchstore_error_t couchstore_commit(Db *db)
 {
@@ -258,6 +282,24 @@ couchstore_error_t couchstore_commit(Db *db)
     if (errcode == COUCHSTORE_SUCCESS) {
         errcode = db->file.ops->sync(&db->file.lastError, db->file.handle);
     }
+
+    return errcode;
+}
+
+LIBCOUCHSTORE_API
+couchstore_error_t couchstore_commit_nosync(Db *db)
+{
+    COLLECT_LATENCY();
+
+    couchstore_error_t errcode = precommit_nosync(db);
+
+    if (errcode == COUCHSTORE_SUCCESS) {
+        errcode = db_write_header(db);
+    }
+
+    //if (errcode == COUCHSTORE_SUCCESS) {
+    //    errcode = db->file.ops->sync(&db->file.lastError, db->file.handle);
+    //}
 
     return errcode;
 }

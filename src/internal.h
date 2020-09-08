@@ -164,6 +164,7 @@ extern "C" {
                                            const sized_buf *v);
 
     couchstore_error_t precommit(Db *db);
+	couchstore_error_t precommit_nosync(Db *db);
     couchstore_error_t db_write_header(Db *db);
 
 #ifdef __cplusplus
